@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
-from models import connect_db, db, User
-from forms import RegisterForm, LoginForm
+from models import connect_db, db, User, Feedback
+from forms import RegisterForm, LoginForm, FeedbackForm
 
 from sqlalchemy.exc import IntegrityError
 
@@ -80,5 +80,43 @@ def logout():
 def show_secret_page(username):
     if "username" in session:
         user = User.query.get_or_404(username)
-        return render_template("username.html", user=user)
+        feedback = Feedback.query.filter(username == username)
+        return render_template("username.html", user=user, feedback=feedback)
     return redirect("/login")
+
+
+@app.route("/users/<username>/delete")
+def show_delete_page(username):
+    if "username" in session:
+        user = User.query.get_or_404(username)
+        return render_template("delete_page.html", user=user)
+
+
+@app.route("/users/<username>/delete", methods=["POST"])
+def delete_user(username):
+    if "username" in session:
+        user = User.query.get_or_404(username)
+        db.session.delete(user)
+        db.session.commit()
+        session.pop("username")
+        return redirect("/")
+
+
+@app.route("/users/<username>/feedback/add", methods=["GET", "POST"])
+def add_feedback_form(username):
+    if "username" not in session:
+        flash("This page is only available to subscribers. Please log in.", "danger")
+        return redirect("/")
+
+    form = FeedbackForm()
+    if form.validate_on_submit():
+        user = User.query.get_or_404(username)
+        title = form.title.data
+        content = form.content.data
+        new_feedback = Feedback(
+            title=title, content=content, username=session["username"]
+        )
+        db.session.add(new_feedback)
+        db.session.commit()
+        return redirect(f"/users/{user.username}")
+    return render_template("feedback.html", form=form)

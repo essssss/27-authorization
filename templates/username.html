@@ -3,8 +3,28 @@
 SECRET PAGE
 {% endblock %}
 {% block content %}
-<div class="container">
+<div class="container my-4">
 <h1 class="display-1">You made it!</h1>
-{{ user.username }}
+{{ user.username }} <br>
+<small>{{ user.email }}</small> <br>
+{{ user.first_name }} {{ user.last_name }} <br>
+</div>
+<div class="container">
+	<a href="/users/{{ user.username }}/feedback/add" class="btn btn-primary">Add Feedback</a>
+	{% for item in feedback %}
+		<div class="card my-4">
+			<h5 class="card-header">
+				{{ item.title }}
+			</h5>
+			<div class="card-body">
+				<p class="card-text">
+					{{ item.content }}
+				</p>
+			</div>
+		</div>
+	{% endfor %}
+</div>
+<div class="container mt-3">
+<a href="/users/{{ user.username }}/delete" class="btn btn-info">DELETE USER</a>
 </div>
 {% endblock %}
